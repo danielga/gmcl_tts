@@ -2,19 +2,14 @@
 
 A module for Garry's Mod that provides text-to-speech interfaces to developers.
 
-## Info
+## Compiling
 
 This is Windows only (uses Microsoft's TTS capabilities).
+The only supported compilation platform for this project on Windows are the ones provided by **Visual Studio**.  
+If stuff starts erroring or fails to work, be sure to check the correct line endings (\n and such) are present in the files.  
 
-This project requires [garrysmod_common][1], a framework to facilitate the creation of compilations files (Visual Studio, make, XCode, etc). Simply set the environment variable 'GARRYSMOD_COMMON' or the premake option 'gmcommon' to the path of your local copy of [garrysmod_common][1].
+## Requirements
 
-## Relevant URLs
+This project requires [garrysmod\_common][1], a framework to facilitate the creation of compilations files (Visual Studio, make, XCode, etc). Simply set the environment variable '**GARRYSMOD\_COMMON**' or the premake option '**gmcommon**' to the path of your local copy of [garrysmod\_common][1].  
 
-[Microsoft Language Development Center downloads][2]
-
-[Microsoft Speech Platform - Runtime (Version 11)][3]
-
-
-  [1]: https://bitbucket.org/danielga/garrysmod_common
-  [2]: https://www.microsoft.com/pt-pt/mldc/downloads.aspx
-  [3]: https://www.microsoft.com/en-us/download/details.aspx?id=27225
+  [1]: https://github.com/danielga/garrysmod_common
