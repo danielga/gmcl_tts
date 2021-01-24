@@ -1,31 +1,40 @@
 #include <GarrysMod/Lua/Interface.h>
 #include <lua.hpp>
+
 #include <cstdint>
-#include <sapi.h>
-#include <sphelper.h>
 #include <vector>
-#include <locale>
-#include <codecvt>
 #include <string>
+
+#include <sapi.h>
+
+#pragma warning( push ) // Disable warning C4996: 'GetVersionExA': was declared deprecated (sphelper.h:1319)
+#pragma warning( disable: 4996 )
+#include <sphelper.h>
+#pragma warning( pop )
 
 namespace tts
 {
 
 static const char metaname[] = "ISpVoice";
-static int32_t metatype = GarrysMod::Lua::Type::NIL;
+static int32_t metatype = GarrysMod::Lua::Type::None;
 static const char tablename[] = "tts";
 static const char invalid_error[] = "invalid ISpVoice";
 
 inline std::wstring ConvertToUTF16( const char *str )
 {
-	std::wstring_convert< std::codecvt_utf8_utf16<wchar_t> > converter;
-	return converter.from_bytes( str );
+	const int wchars_num = MultiByteToWideChar( CP_UTF8, 0, str, -1, nullptr, 0 );
+	std::wstring wstr( wchars_num - 1, L'\0' );
+	MultiByteToWideChar( CP_UTF8, 0, str, -1, wstr.data( ), wchars_num );
+	return wstr;
 }
 
-inline std::string ConvertToUTF8( const wchar_t *str )
+inline std::string ConvertToUTF8( const wchar_t *wstr )
 {
-	std::wstring_convert< std::codecvt_utf8_utf16<wchar_t> > converter;
-	return converter.to_bytes( str );
+	BOOL used_default_char = false;
+	const int chars_num = WideCharToMultiByte( CP_UTF8, 0, wstr, -1, nullptr, 0, '\0', &used_default_char );
+	std::string str( chars_num - 1, '\0' );
+	WideCharToMultiByte( CP_UTF8, 0, wstr, -1, str.data( ), chars_num, '\0', &used_default_char );
+	return str;
 }
 
 static int32_t PushError( GarrysMod::Lua::ILuaBase *LUA, const char *error, HRESULT hr )
@@ -52,10 +61,10 @@ inline int32_t PushEvent( GarrysMod::Lua::ILuaBase *LUA, const CSpEvent &ev )
 	LUA->PushNumber( static_cast<double>( ev.ullAudioStreamOffset ) );
 	LUA->SetField( -2, "stream_offset" );
 
-	LUA->PushNumber( ev.wParam );
+	LUA->PushNumber( static_cast<double>( ev.wParam ) );
 	LUA->SetField( -2, "wparam" );
 
-	LUA->PushNumber( ev.lParam );
+	LUA->PushNumber( static_cast<double>( ev.lParam ) );
 	LUA->SetField( -2, "lparam" );
 
 	return 1;
@@ -75,17 +84,6 @@ static ISpVoice *GetAndValidate( GarrysMod::Lua::ILuaBase *LUA, int32_t index )
 		LUA->ArgError( index, invalid_error );
 
 	return voice;
-}
-
-static void Create( GarrysMod::Lua::ILuaBase *LUA, ISpVoice *voice )
-{
-	LUA->PushUserType( voice, metatype );
-
-	LUA->PushMetaTable( metatype );
-	LUA->SetMetaTable( -2 );
-
-	LUA->CreateTable( );
-	LUA->SetFEnv( -2 );
 }
 
 inline int32_t SetVoice( GarrysMod::Lua::ILuaBase *LUA, ISpVoice *voice, const char *name )
@@ -395,6 +393,10 @@ LUA_FUNCTION_STATIC( create )
 	}
 
 	LUA->PushUserType( voice.Detach( ), metatype );
+
+	LUA->CreateTable( );
+	LUA->SetFEnv( -2 );
+
 	return 1;
 }
 
@@ -477,6 +479,9 @@ static void Initialize( GarrysMod::Lua::ILuaBase *LUA )
 
 	LUA->PushCFunction( interest );
 	LUA->SetField( -2, "interest" );
+
+	LUA->PushCFunction( skip );
+	LUA->SetField( -2, "skip" );
 
 	LUA->PushCFunction( events );
 	LUA->SetField( -2, "events" );
